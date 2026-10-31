@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Consent Tester</title>
+<style>
+  /* DLC brand palette; one centered column: config card, primary action, result panel shown on return. */
+  :root{
+    --bg:#FFFBF9; --panel:#FFF2EB; --fg:#212121; --muted:#7a6a5f;
+    --accent:#E68E17; --accent-ink:#5c3a08; --border:#F5DBCC;
+    --ok:#2e7d32; --ok-bg:#e8f4e9; --bad:#b3261e; --bad-bg:#fbe9e7;
+    --card:#ffffff;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#1a1613; --panel:#231d18; --fg:#f3ebe4; --muted:#b2a295;
+    --accent:#f0a136; --accent-ink:#1a1613; --border:#3a2f27;
+    --ok:#7bd07f; --ok-bg:#1d2a1e; --bad:#f2a79f; --bad-bg:#2c1a17;
+    --card:#211b16; color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#1a1613; --panel:#231d18; --fg:#f3ebe4; --muted:#b2a295;
+    --accent:#f0a136; --accent-ink:#1a1613; --border:#3a2f27;
+    --ok:#7bd07f; --ok-bg:#1d2a1e; --bad:#f2a79f; --bad-bg:#2c1a17;
+    --card:#211b16; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+  body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.5;font-size:14px}
+  .wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px;display:flex;flex-direction:column;gap:20px}
+  header h1{font-size:1.5rem;margin:0 0 4px;text-wrap:balance}
+  header p{margin:0;color:var(--muted);font-size:.95rem}
+  .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;color:var(--accent);margin:0 0 6px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+  .card h2{font-size:1rem;margin:0}
+  label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted)}
+  input{font:inherit;font-size:.9rem;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);min-width:0}
+  input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .hint{font-weight:400;color:var(--muted);font-size:.78rem}
+  .ro{font-family:var(--mono);font-size:.8rem;word-break:break-all;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--fg)}
+  .btnrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  button,.btn{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid transparent;padding:11px 18px;text-decoration:none;display:inline-block}
+  .primary{background:var(--accent);color:var(--accent-ink);font-size:.95rem}
+  .primary:hover{filter:brightness(1.05)}
+  .ghost{background:transparent;color:var(--fg);border-color:var(--border)}
+  .ghost:hover{background:var(--panel)}
+  details summary{cursor:pointer;font-size:.85rem;color:var(--muted);font-weight:600}
+  details[open] summary{margin-bottom:8px}
+  .result{border-radius:12px;padding:18px 20px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+  .result.ok{background:var(--ok-bg);border-color:var(--ok)}
+  .result.bad{background:var(--bad-bg);border-color:var(--bad)}
+  .result h2{font-size:1.05rem;margin:0}
+  .result.ok h2{color:var(--ok)} .result.bad h2{color:var(--bad)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.85rem}
+  .kv dt{color:var(--muted);font-weight:600}
+  .kv dd{margin:0;font-family:var(--mono);word-break:break-all}
+  footer{color:var(--muted);font-size:.78rem;text-align:center}
+  code{font-family:var(--mono);background:var(--panel);padding:1px 5px;border-radius:5px;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">DLC &middot; Multi-tenant consent test</p>
+    <h1>Consent Tester</h1>
+    <p>Send a customer admin through the Microsoft admin-consent flow for the <strong>DLC Consent Test App</strong>, then read back what Microsoft returns.</p>
+  </header>
+
+  <section class="result" id="result" hidden>
+    <h2 id="resultTitle"></h2>
+    <p id="resultMsg"></p>
+    <dl class="kv" id="resultKv"></dl>
+    <div class="btnrow"><button class="ghost" id="again">Run another consent</button></div>
+  </section>
+
+  <section class="card" id="form">
+    <h2>What will happen</h2>
+    <p class="hint">Clicking <em>Grant admin consent</em> opens Microsoft's sign-in. Sign in as a <strong>customer admin</strong> (for this test, <code>admin@dlcconsenttest.onmicrosoft.com</code>), review the permissions, and accept. Microsoft returns you here and this page shows the result.</p>
+
+    <label>Application (client) ID
+      <input id="clientId" value="c3080ca3-e685-4bd1-a395-fbfee93c2103" spellcheck="false" autocapitalize="off">
+    </label>
+
+    <label>Tenant
+      <input id="tenant" value="organizations" spellcheck="false" autocapitalize="off">
+      <span class="hint">Who may consent. <code>organizations</code> = any work/school admin. Or pin one tenant, e.g. <code>dlcconsenttest.onmicrosoft.com</code>.</span>
+    </label>
+
+    <label>Redirect URI (where Microsoft returns)
+      <div class="ro" id="redirectUri">&mdash;</div>
+      <span class="hint">This exact value must be registered as a Web redirect URI on the app.</span>
+    </label>
+
+    <div class="btnrow">
+      <a class="btn primary" id="go" href="#">Grant admin consent</a>
+      <button class="ghost" id="copy">Copy consent URL</button>
+    </div>
+
+    <details>
+      <summary>Show the exact consent URL</summary>
+      <div class="ro" id="urlPreview">&mdash;</div>
+    </details>
+  </section>
+
+  <footer>Internal testing tool &middot; Distributed Logic Corp.</footer>
+</div>
+
+<script>
+  var $=function(s){return document.querySelector(s)};
+  var redirectUri=location.origin+location.pathname;
+  $("#redirectUri").textContent=redirectUri;
+
+  function buildUrl(){
+    var tenant=($("#tenant").value||"organizations").trim();
+    var clientId=($("#clientId").value||"").trim();
+    var state="dlc-"+Date.now();
+    try{sessionStorage.setItem("dlc_consent_state",state);}catch(e){}
+    var p=new URLSearchParams({
+      client_id:clientId,
+      scope:"https://graph.microsoft.com/.default",
+      redirect_uri:redirectUri,
+      state:state
+    });
+    return "https://login.microsoftonline.com/"+encodeURIComponent(tenant)+"/v2.0/adminconsent?"+p.toString();
+  }
+  function refresh(){ var u=buildUrl(); $("#go").href=u; $("#urlPreview").textContent=u; }
+  $("#clientId").addEventListener("input",refresh);
+  $("#tenant").addEventListener("input",refresh);
+  refresh();
+
+  $("#copy").addEventListener("click",function(){
+    var u=buildUrl();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(u).then(function(){flash("Copied")},function(){select()});
+    }else{select()}
+    function select(){ $("#urlPreview").textContent=u; var r=document.createRange(); r.selectNodeContents($("#urlPreview")); var s=getSelection(); s.removeAllRanges(); s.addRange(r); flash("Selected — press Ctrl+C"); }
+    function flash(t){ var b=$("#copy"); var o=b.textContent; b.textContent=t; setTimeout(function(){b.textContent=o},1600); }
+  });
+
+  (function(){
+    var q=new URLSearchParams(location.search);
+    if(!q.has("admin_consent")&&!q.has("error"))return;
+    var res=$("#result"), title=$("#resultTitle"), msg=$("#resultMsg"), kv=$("#resultKv");
+    $("#form").hidden=true; res.hidden=false;
+    function row(k,v){ if(!v)return; var dt=document.createElement("dt"); dt.textContent=k; var dd=document.createElement("dd"); dd.textContent=v; kv.appendChild(dt); kv.appendChild(dd); }
+    var granted=(q.get("admin_consent")||"").toLowerCase()==="true";
+    if(granted&&!q.has("error")){
+      res.className="result ok";
+      title.textContent="Admin consent granted ✓";
+      msg.textContent="The customer admin accepted. A service principal for the app now exists in their tenant, with the admin-consented permissions recorded.";
+      row("Consenting tenant",q.get("tenant"));
+      row("State",q.get("state"));
+    }else{
+      res.className="result bad";
+      title.textContent="Consent not completed";
+      msg.textContent=q.get("error_description")||"Microsoft returned an error instead of a grant.";
+      row("Error",q.get("error"));
+      row("Tenant",q.get("tenant"));
+      row("State",q.get("state"));
+    }
+  })();
+  $("#again").addEventListener("click",function(){ location.href=redirectUri; });
+</script>
+</body>
+</html>
