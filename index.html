@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Consent Tester</title>
+<title>Grant Access · Distributed Logic</title>
 <style>
   /* DLC brand palette; one centered column: config card, primary action, result panel shown on return. */
   :root{
@@ -67,9 +67,9 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">DLC &middot; Multi-tenant consent test</p>
-    <h1>Consent Tester</h1>
-    <p>Send a customer admin through the Microsoft admin-consent flow for the <strong>DLC Consent Test App</strong>, then read back what Microsoft returns.</p>
+    <p class="eyebrow">Distributed Logic Corp.</p>
+    <h1>Grant access to Distributed Logic</h1>
+    <p>Approve Distributed Logic's governance application in your Microsoft 365 tenant. This uses Microsoft's standard admin‑consent process — no passwords are shared, and your users are never prompted.</p>
   </header>
 
   <section class="result" id="result" hidden>
@@ -81,7 +81,7 @@
 
   <section class="card" id="form">
     <h2>What will happen</h2>
-    <p class="hint">Clicking <em>Grant admin consent</em> opens Microsoft's sign-in. Sign in as a <strong>customer admin</strong> (for this test, <code>admin@dlcconsenttest.onmicrosoft.com</code>), review the permissions, and accept. Microsoft returns you here and this page shows the result.</p>
+    <p class="hint">Clicking <em>Grant admin consent</em> opens Microsoft's sign-in. Sign in as a <strong>Global Administrator</strong> of your tenant, review the permissions Microsoft lists, and accept. Microsoft returns you here and this page confirms the result.</p>
 
     <label>Application (client) ID
       <input id="clientId" value="c3080ca3-e685-4bd1-a395-fbfee93c2103" spellcheck="false" autocapitalize="off">
@@ -108,7 +108,7 @@
     </details>
   </section>
 
-  <footer>Internal testing tool &middot; Distributed Logic Corp.</footer>
+  <footer>Distributed Logic Corp. &middot; Microsoft 365 governance</footer>
 </div>
 
 <script>
@@ -153,7 +153,7 @@
     if(granted&&!q.has("error")){
       res.className="result ok";
       title.textContent="Admin consent granted ✓";
-      msg.textContent="The customer admin accepted. A service principal for the app now exists in their tenant, with the admin-consented permissions recorded.";
+      msg.textContent="Distributed Logic's governance application is now connected to your Microsoft 365 tenant. No further action is needed — you can close this page. You can revoke access at any time in Microsoft Entra admin center → Enterprise applications.";
       row("Consenting tenant",q.get("tenant"));
       row("State",q.get("state"));
     }else{
