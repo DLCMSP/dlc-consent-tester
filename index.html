@@ -123,11 +123,10 @@
     try{sessionStorage.setItem("dlc_consent_state",state);}catch(e){}
     var p=new URLSearchParams({
       client_id:clientId,
-      scope:"https://graph.microsoft.com/.default",
       redirect_uri:redirectUri,
       state:state
     });
-    return "https://login.microsoftonline.com/"+encodeURIComponent(tenant)+"/v2.0/adminconsent?"+p.toString();
+    return "https://login.microsoftonline.com/"+encodeURIComponent(tenant)+"/adminconsent?"+p.toString();
   }
   function refresh(){ var u=buildUrl(); $("#go").href=u; $("#urlPreview").textContent=u; }
   $("#clientId").addEventListener("input",refresh);
